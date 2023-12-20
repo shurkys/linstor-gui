@@ -5,6 +5,9 @@
 ## Overview
 Linstor GUI is a web-based graphical user interface designed for [Linstor](https://linbit.com/linstor/) or [Piraeus](https://piraeus.io). The primary purpose of this project is for informational and educational purposes, exploring technologies such as [Next.js](https://nextjs.org), [Tailwindcss](https://tailwindcss.com), [Flowbite React](https://www.flowbite-react.com), and Linstor :smiley:
 
+<img src="./img/LP%20nodes.png" height="200" /><img src="./img/LP%20SP.png" height="200" />
+<img src="./img/LP%20resources.png"  height="200" /><img src="./img/LP%20Volumes.png" height="200" />
+
 ## Build Instructions
 After building the project, you can use the following commands:
 
