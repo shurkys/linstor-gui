@@ -1,0 +1,175 @@
+// ./app/inventory/nodes/add.tsx
+'use client';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { Node, NodeType, SatelliteEncryptionType } from '@/types/Node';
+
+import { Button, Label,TextInput,Select } from 'flowbite-react';
+
+
+export default function AddNodePage() {
+  const router = useRouter();
+  const [nodeName, setNodeName] = useState('');
+  const [nodeType, setNodeType] = useState<NodeType>(NodeType.Satellite);
+  const [optionalFields, setOptionalFields] = useState({
+    interfaceName: 'default',
+    interfaceAddress: '',
+    interfacePort: '3366',
+    interfaceEncryptionType: SatelliteEncryptionType.Plain,
+    isActive: true,
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Validate input fields
+      if (!nodeName || !nodeType || !optionalFields.interfaceAddress || !optionalFields.interfacePort) {
+        setError('Please fill in all required fields.');
+        return;
+      }
+
+      // Perform the API call
+      const response = await fetch('/v1/nodes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: nodeName,
+          type: nodeType,
+          net_interfaces: [
+            {
+              name: optionalFields.interfaceName,
+              address: optionalFields.interfaceAddress,
+              satellite_port: parseInt(optionalFields.interfacePort),
+              satellite_encryption_type: optionalFields.interfaceEncryptionType,
+              is_active: optionalFields.isActive,
+              uuid: '', // Adjust based on your API response
+            },
+          ],
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.ret_code === 0) {
+          console.log('Node added successfully!');
+          const newNodeId = result.obj_refs.additionalProp1; // Adjust based on your API response
+          router.push(`/inventory/nodes/${newNodeId}`);
+        } else {
+          setError(result.details || 'Failed to add node');
+        }
+      } else {
+        setError('Failed to add node');
+      }
+    } catch (error) {
+      console.error('Error submitting node data:', error);
+      setError('Failed to add node');
+    }
+  };
+
+const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value, type } = e.target;
+
+  if (type === 'checkbox') {
+    const isChecked = (e.target as HTMLInputElement).checked;
+    setOptionalFields((prev) => ({ ...prev, [name]: isChecked }));
+  } else {
+    setOptionalFields((prev) => ({ ...prev, [name]: value }));
+  }
+};
+
+return (
+  <div className="p-4 sm:ml-64 ">
+    <div className="p-4 rounded-lg  mt-14 md:w-1/2">
+      <div className="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Add Node
+        </h3>
+      </div>
+      <form onSubmit={handleSubmit} className="flex max-w-md flex-col gap-4">
+        <div>
+          <div className="mb-2 block">
+            <Label htmlFor="node_name" value="Node Name:" />
+          </div>
+          <TextInput id="node_name" type="text"
+            value={nodeName}
+            onChange={(e) => setNodeName(e.target.value)} />
+        </div>
+        <div>
+          <div className="mb-2 block">
+            <Label htmlFor="node_type" value="Node Type:" />
+          </div>
+          <Select id="node_type" required
+            value={nodeType} onChange={(e) => setNodeType(e.target.value as NodeType)}>
+            {Object.values(NodeType).map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <div className="mb-2 block">
+            <Label htmlFor="interface_name" value="Interface Name:" />
+          </div>
+          <TextInput id="interface_name" type="text"
+            value={optionalFields.interfaceName}
+            onChange={(e) => setOptionalFields((prev) => ({ ...prev, interfaceName: e.target.value }))}
+          />
+        </div>
+        <div>
+          <div className="mb-2 block">
+            <Label htmlFor="interface_address" value="Interface Address:" />
+          </div>
+          <TextInput id="interface_address" type="text"
+            value={optionalFields.interfaceAddress}
+            onChange={(e) => setOptionalFields((prev) => ({ ...prev, interfaceAddress: e.target.value }))}
+          />
+        </div>
+        <div>
+          <div className="mb-2 block">
+            <Label htmlFor="interface_port" value="Interface Port:" />
+          </div>
+          <TextInput id="interface_port" type="text"
+            value={optionalFields.interfacePort}
+            onChange={(e) => setOptionalFields((prev) => ({ ...prev, interfacePort: e.target.value }))}
+          />
+        </div>
+        <div>
+          <div className="mb-2 block">
+            <Label htmlFor="interface_encryption_type" value="Interface Encryption Type:"  />
+          </div>
+          <Select id="interface_encryption_type" required
+            value={optionalFields.interfaceEncryptionType}
+            onChange={(e) =>
+            setOptionalFields((prev) => ({
+              ...prev,
+              interfaceEncryptionType: e.target.value as SatelliteEncryptionType,
+            }))
+          }
+          >
+          {Object.values(SatelliteEncryptionType).map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div>
+        <div className="mb-2 block">
+          <Label htmlFor="is_active" value="Is Active:" />
+        </div>
+        <TextInput id="is_active" type="text"
+          checked={optionalFields.isActive}
+          onChange={() => setOptionalFields((prev) => ({ ...prev, isActive: !prev.isActive }))}
+        />
+      </div>
+        <Button type="submit">Create node</Button>
+      </form>
+    {error && <p style={{ color: 'red' }}>{error}</p>}
+    </div>
+  </div>
+)};

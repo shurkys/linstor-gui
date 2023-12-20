@@ -1,0 +1,172 @@
+// ./app/inventory/storage-pools/add.tsx
+'use client';
+import { useState, FormEvent, ChangeEvent, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Node } from '@/types/Node';
+import { StoragePool, ProviderKind } from '@/types/StoragePool';
+import { Button, Label, TextInput, Select } from 'flowbite-react';
+
+export default function AddStoragePool() {
+  const router = useRouter();
+  const [selectedNode, setSelectedNode] = useState('');
+  const [storagePoolName, setStoragePoolName] = useState('');
+  const [providerKind, setProviderKind] = useState<ProviderKind>(ProviderKind.LVM_THIN);
+  const [lvmVg, setLvmVg] = useState('');
+  const [thinPool, setThinPool] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [nodes, setNodes] = useState<Node[]>([]);
+
+  // Получение списка нод
+  useEffect(() => {
+    const fetchNodes = async () => {
+      try {
+        const response = await fetch('/v1/nodes');
+        if (response.ok) {
+          const data = await response.json();
+          setNodes(data); // Сохраняем список нод в состоянии
+        } else {
+          console.error('Failed to fetch nodes');
+        }
+      } catch (error) {
+        console.error('Error fetching nodes:', error);
+        setError((error as Error).message || 'Failed to fetch nodes');
+      }
+    };
+
+    fetchNodes();
+  }, []); // Пустой массив зависимостей означает, что эффект будет выполнен только при монтировании компонента
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(`/v1/nodes/${selectedNode}/storage-pools`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          storage_pool_name: storagePoolName,
+          provider_kind: providerKind,
+          props: {
+            'StorDriver/LvmVg': lvmVg,
+            'StorDriver/ThinPool': thinPool,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        console.log('Storage pool created successfully!');
+        // Optionally, you can navigate to the storage pool details page or any other page
+        router.push(`/inventory/storage-pools`);
+      } else {
+        const data = await response.json();
+        setError(data.message || 'Failed to create storage pool');
+        console.error('Storage pool creation failed:', data.error || data);
+      }
+    } catch (error) {
+      console.error('Error creating storage pool:', error);
+      setError((error as Error).message || 'Failed to create storage pool');
+    }
+  };
+
+  return (
+    <div className="p-4 sm:ml-64">
+      <div className="p-4 rounded-lg mt-14 md:w-1/2">
+        <div className="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add Storage Pool</h3>
+        </div>
+        <form onSubmit={handleSubmit} className="flex max-w-md flex-col gap-4">
+          <div>
+            <div className="mb-2 block">
+              <Label htmlFor="selectedNode" value="Select Node:" />
+            </div>
+            <Select
+              id="selectedNode"
+              value={selectedNode}
+              onChange={(e) => setSelectedNode(e.target.value)}
+              // required
+            >
+              <option value="" disabled>Select a Node</option>
+              {nodes.map((node) => (
+                <option key={node.name} value={node.name}>
+                  {node.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <div className="mb-2 block">
+              <Label htmlFor="storage_pool_name" value="Storage Pool Name:" />
+            </div>
+            <TextInput
+              id="storage_pool_name"
+              type="text"
+              value={storagePoolName}
+              onChange={(e) => setStoragePoolName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <div className="mb-2 block">
+              <Label htmlFor="provider_kind" value="Provider Kind:" />
+            </div>
+            <Select
+              id="provider_kind"
+              value={providerKind}
+              onChange={(e) => setProviderKind(e.target.value as ProviderKind)}
+              required
+            >
+              {Object.values(ProviderKind).map((kind) => (
+                <option key={kind} value={kind}>
+                  {kind}
+                </option>
+              ))}
+            </Select>
+          </div>
+          {providerKind === 'LVM_THIN' && (
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="lvm_vg" value="LVM VG:" />
+              </div>
+              <TextInput
+                id="lvm_vg"
+                type="text"
+                value={lvmVg}
+                onChange={(e) => setLvmVg(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          {providerKind === 'LVM_THIN' && (
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="thin_pool" value="Thin Pool:" />
+              </div>
+              <TextInput
+                id="thin_pool"
+                type="text"
+                value={thinPool}
+                onChange={(e) => setThinPool(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          <div>
+            <div className="mb-2 block">
+              {error && (
+                <p className="text-red-500 mb-4 text-sm font-medium">{error}</p>
+              )}
+            </div>
+          </div>
+          <Button
+            type="submit"
+            onClick={() => console.log('Add Storage Pool clicked')}
+          >
+            Create Storage Pool
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+};
