@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Linstor GUI
 
-## Getting Started
+**Note: This application is not intended for production use.**
 
-First, run the development server:
+## Overview
+Linstor GUI is a web-based graphical user interface designed for [Linstor](https://linbit.com/linstor/) or [Piraeus](https://piraeus.io). The primary purpose of this project is for informational and educational purposes, exploring technologies such as [Next.js](https://nextjs.org), [Tailwindcss](https://tailwindcss.com), [Flowbite React](https://www.flowbite-react.com), and Linstor :smiley:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Build Instructions
+After building the project, you can use the following commands:
+
+```sh
+npm run build
 ```
+Alternatively, you can use Docker:
+```sh
+docker run -ti -v .:/opt/app node:lts-alpine sh -c 'cd /opt/app && npm ci && npm run build'
+```
+Copy the files from the `./out` directory to `/usr/share/linstor-server/ui` on your Linstor controller. Access the GUI at `http://YOUR_CONTROLLER_IP_ADDRESS:3370/ui/`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development Setup
+For development, you can use Docker Compose:
+```sh
+docker-compose up
+```
+Access the development environment at [http://localhost:3370/ui/](http://localhost:3370/ui/)
+## License
+This project is licensed under the MIT License, making it free software.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Feel free to explore, modify, and learn from this project! :rocket:

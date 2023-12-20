@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: dev
+    volumes:
+      - .:/opt/app
+    environment:
+      API_SERVER_ADDR: ":3000"
+      API_URL: "http://localhost:3370/ui"
+    ports:
+    - "3370:3370"
+    command: startController
