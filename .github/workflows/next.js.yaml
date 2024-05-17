@@ -2,15 +2,11 @@ name: Next.js CI
 
 on:
   push:
-    branches:
-      - "main"
-  release:
-    types:
-      - created
+    branches: ["main"]
 
 jobs:
   build:
-    name: 🎉 Build
+    name: 🎉 Deploy
     runs-on: ubuntu-latest
 
     strategy:
@@ -22,11 +18,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4 # Обновлено на версию 4
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-
+          
       - name: 🔨 Build Project
+        id: build
         run: |
           npm ci
           npm run build --if-present
@@ -35,33 +32,49 @@ jobs:
         run: find out/ -print
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
+        with:
+          name: Build
+          path: out
+          
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+        
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
         with:
           name: Build
           path: out
 
-  release:
-    name: 🚀 Release
-    needs: build
-    if: startsWith(github.event_name, 'release')
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 🚚 Get latest code
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v4
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          node-version: 20.x
+          tag_name: ${{ github.sha }}
+          release_name: Release ${{ github.sha }}
+          body: |
+            Release ${{ github.sha }} generated automatically by GitHub Actions.
+          draft: false
+          prerelease: false
 
-      - name: 🔑 Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: Upload Artifact to Release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: 🚀 Deploy Release
-        run: |
-          # Ваши команды развертывания здесь
-          echo "Deploying release..."
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./out
+          asset_name: build-${{ github.sha }}.zip
+          asset_content_type: application/zip
