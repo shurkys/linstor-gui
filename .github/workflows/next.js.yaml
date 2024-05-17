@@ -35,7 +35,7 @@ jobs:
         run: find out/ -print
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4 # Обновлено на версию 4
+        uses: actions/upload-artifact@v4
         with:
           name: Build
           path: out
@@ -52,12 +52,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Use Node.js 20.x
-        uses: actions/setup-node@v4 # Обновлено на версию 4
+        uses: actions/setup-node@v4
         with:
           node-version: 20.x
 
       - name: 🔑 Setup SSH
-        uses: webfactory/ssh-agent@v1 # Обновлено на версию 1
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
